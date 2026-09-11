@@ -18,7 +18,7 @@ public struct FileNode: Identifiable, Hashable, Sendable {
 }
 
 public enum FileTreeBuilder {
-    private static let keys: [URLResourceKey] = [.isDirectoryKey, .isHiddenKey, .nameKey]
+    private static let keys: [URLResourceKey] = [.isDirectoryKey, .isHiddenKey, .nameKey, .isSymbolicLinkKey]
 
     public static func build(root: URL) throws -> FileNode {
         let root = root.standardizedFileURL
@@ -45,11 +45,13 @@ public enum FileTreeBuilder {
             at: directory, includingPropertiesForKeys: keys, options: [.skipsHiddenFiles])
         var nodes: [FileNode] = []
         for entry in entries {
-            let values = try entry.resourceValues(forKeys: Set(keys))
+            guard let values = try? entry.resourceValues(forKeys: Set(keys)) else { continue }
+            guard values.isSymbolicLink != true else { continue }
             let url = entry.standardizedFileURL
             let name = values.name ?? url.lastPathComponent
             if values.isDirectory == true {
-                nodes.append(FileNode(url: url, name: name, isDirectory: true, children: try children(of: url)))
+                let subchildren = (try? children(of: url)) ?? []
+                nodes.append(FileNode(url: url, name: name, isDirectory: true, children: subchildren))
             } else if url.pathExtension.lowercased() == "feature" {
                 nodes.append(FileNode(url: url, name: name, isDirectory: false, children: nil))
             }

@@ -71,4 +71,40 @@ struct TempProject {
         let missing = URL(fileURLWithPath: "/nonexistent/guerkchen-\(UUID().uuidString)")
         #expect(throws: (any Error).self) { try FileTreeBuilder.build(root: missing) }
     }
+
+    @Test func skipsSymbolicLinks() throws {
+        let p = try TempProject(); defer { p.cleanup() }
+        try p.write("real/a.feature", "Feature: A")
+
+        // Create directory symlink loop
+        let loopURL = p.root.appendingPathComponent("loop", isDirectory: true)
+        try FileManager.default.createSymbolicLink(at: loopURL, withDestinationURL: p.root)
+
+        // Create file symlink
+        let linkFileURL = p.root.appendingPathComponent("link.feature")
+        try FileManager.default.createSymbolicLink(at: linkFileURL, withDestinationURL: p.root.appendingPathComponent("real/a.feature"))
+
+        let tree = try FileTreeBuilder.build(root: p.root)
+        let names = tree.children!.map(\.name)
+        #expect(names == ["real"])
+
+        let files = FileTreeBuilder.featureFiles(under: p.root).map { $0.lastPathComponent }
+        #expect(files == ["a.feature"])
+    }
+
+    @Test func unreadableSubdirectoryYieldsEmptyChildren() throws {
+        guard getuid() != 0 else { return }
+
+        let p = try TempProject(); defer { p.cleanup() }
+        let lockedURL = try p.mkdir("locked")
+        try p.write("locked/x.feature", "Feature: X")
+
+        try FileManager.default.setAttributes([.posixPermissions: 0o000], ofItemAtPath: lockedURL.path)
+        defer { try? FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: lockedURL.path) }
+
+        let tree = try FileTreeBuilder.build(root: p.root)
+        let lockedNode = tree.children!.first { $0.name == "locked" }
+        #expect(lockedNode != nil)
+        #expect(lockedNode!.children == [])
+    }
 }
