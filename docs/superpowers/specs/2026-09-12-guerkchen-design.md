@@ -54,18 +54,23 @@ Repo ist leer. Xcode 26.6, Swift 6.3, XcodeGen installiert. Ziel: macOS 15.
 
 ## Projektstruktur
 
+Die drei UI-freien Schichten liegen in einem lokalen Swift-Package `Core`, damit ihre Tests mit `swift test` ohne Xcode-Testhost laufen. Die App ist ein XcodeGen-Target, das dieses Package einbindet.
+
 ```
-project.yml                 # XcodeGen: Target guerkchen (macOS 15), Target guerkchenTests
-Sources/guerkchen/{Gherkin,Project,Suggest,UI,App}/
-Sources/guerkchen/Resources/gherkin-languages.json
-Tests/guerkchenTests/{Gherkin,Project,Suggest}/
-Examples/demo-project/*.feature   # 3 Dateien, en + de
+project.yml                              # XcodeGen: Target guerkchen (macOS 15), bindet Core ein
+Core/Package.swift                       # Library GuerkchenCore, Swift 6, macOS 15
+Core/Sources/GuerkchenCore/{Gherkin,Project,Suggest}/
+Core/Sources/GuerkchenCore/Resources/gherkin-languages.json
+Core/Tests/GuerkchenCoreTests/{Gherkin,Project,Suggest}/
+App/{App,UI}/                            # SwiftUI + AppKit, Swift 5 Sprachmodus
+Config/Info.plist, Config/guerkchen.entitlements   # von XcodeGen erzeugt
+Examples/demo-project/*.feature          # 3 Dateien, en + de
 docs/superpowers/specs/2026-09-12-guerkchen-design.md
 ```
 
 ## Tests / Verifikation
 
 - Swift Testing für Gherkin, Suggest, Project. Die 4 Beispiele aus der Anfrage werden Testfälle (g→Given, b→Background, "Given " + "a u"→"a user…", sc→Scenario, Scenario Outline).
-- Build/Test: `xcodegen generate && xcodebuild -scheme guerkchen build` und `xcodebuild -scheme guerkchen test`.
+- Tests: `cd Core && swift test`. Build der App: `xcodegen generate && xcodebuild -scheme guerkchen -configuration Debug build`.
 - Manuell: App starten, `Examples/demo-project` öffnen, Tippen/Suggest/Farben/Umbenennen prüfen.
 
