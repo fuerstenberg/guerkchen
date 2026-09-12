@@ -3,11 +3,13 @@ import SwiftUI
 @main
 struct GuerkchenApp: App {
     @State private var appState = AppState()
+    @State private var colors = ColorSettings()
 
     var body: some Scene {
         Window("guerkchen", id: "main") {
             ContentView()
                 .environment(appState)
+                .environment(colors)
                 .frame(minWidth: 800, minHeight: 500)
         }
         .commands {
@@ -31,6 +33,11 @@ struct GuerkchenApp: App {
                     .keyboardShortcut("w", modifiers: [.command, .shift])
                     .disabled(appState.project == nil)
             }
+        }
+
+        Settings {
+            SettingsView()
+                .environment(colors)
         }
     }
 }
