@@ -26,7 +26,10 @@ final class SuggestController {
         }
     }
 
-    deinit {
+    /// Sicherheitsnetz: Wird der Editor abgebaut, während das Panel offen ist, bliebe es
+    /// sonst als Child-Window des Hauptfensters sichtbar zurück.
+    isolated deinit {
+        panel.hide()
         if let deactivateObserver {
             NotificationCenter.default.removeObserver(deactivateObserver)
         }

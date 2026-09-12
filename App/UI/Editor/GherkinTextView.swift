@@ -41,6 +41,12 @@ struct GherkinTextView: NSViewRepresentable {
         context.coordinator.update(document: document, palette: palette, stepsProvider: stepsProvider)
     }
 
+    /// Deterministischer Abbau: ohne das bliebe ein offenes Vorschlagspanel am Hauptfenster hängen.
+    static func dismantleNSView(_ nsView: NSScrollView, coordinator: Coordinator) {
+        coordinator.suggest?.hide()
+        coordinator.suggest = nil
+    }
+
     @MainActor
     final class Coordinator: NSObject, NSTextViewDelegate {
         weak var textView: NSTextView?
