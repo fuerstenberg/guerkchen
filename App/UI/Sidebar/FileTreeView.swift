@@ -35,7 +35,6 @@ struct FileTreeView: View {
                         .contentShape(Rectangle())
                         .contextMenu { directoryMenu(for: project.rootURL, isRoot: true) }
                 }
-                .selectionDisabled()
             }
         }
         .listStyle(.sidebar)
