@@ -29,14 +29,26 @@ public enum FileTreeBuilder {
         return FileNode(url: root, name: root.lastPathComponent, isDirectory: true, children: try children(of: root))
     }
 
+    /// Eigene Enumeration statt eines verworfenen `FileNode`-Baums: das läuft bei jedem
+    /// Index-Neuaufbau und soll nicht den ganzen Baum aufbauen.
     public static func featureFiles(under root: URL) -> [URL] {
-        guard let tree = try? build(root: root) else { return [] }
+        let root = root.standardizedFileURL
+        let keys: [URLResourceKey] = [.isDirectoryKey, .isSymbolicLinkKey]
+        guard let enumerator = FileManager.default.enumerator(
+            at: root, includingPropertiesForKeys: keys, options: [.skipsHiddenFiles],
+            errorHandler: { _, _ in true }) else { return [] }
+
         var result: [URL] = []
-        func walk(_ node: FileNode) {
-            if node.isFeatureFile { result.append(node.url) }
-            node.children?.forEach(walk)
+        for case let entry as URL in enumerator {
+            guard let values = try? entry.resourceValues(forKeys: Set(keys)) else { continue }
+            if values.isSymbolicLink == true {
+                // Symlinks werden übersprungen, damit ein Zyklus nicht endlos rekursiert.
+                enumerator.skipDescendants()
+                continue
+            }
+            guard values.isDirectory != true, entry.pathExtension.lowercased() == "feature" else { continue }
+            result.append(entry.standardizedFileURL)
         }
-        walk(tree)
         return result.sorted { $0.path < $1.path }
     }
 
