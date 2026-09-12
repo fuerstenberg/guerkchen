@@ -57,7 +57,10 @@ struct GherkinTextView: NSViewRepresentable {
             if documentChanged || textView.string != document.text {
                 isApplying = true
                 textView.string = document.text
-                if documentChanged { textView.setSelectedRange(NSRange(location: 0, length: 0)) }
+                if documentChanged {
+                    textView.setSelectedRange(NSRange(location: 0, length: 0))
+                    textView.undoManager?.removeAllActions()
+                }
                 isApplying = false
                 suggest?.hide()
                 rehighlight()
