@@ -4,6 +4,9 @@ import GuerkchenCore
 
 struct GherkinTextView: NSViewRepresentable {
     let document: EditorDocument
+    /// Nur damit der View-Wert sich ändert, wenn sich der Text des Dokuments ändert
+    /// (z. B. nach einer externen Änderung). Der Coordinator arbeitet weiter mit `document`.
+    let text: String
     let palette: HighlightPalette
     let stepsProvider: (String) -> [String]
 
@@ -57,9 +60,11 @@ struct GherkinTextView: NSViewRepresentable {
             if documentChanged || textView.string != document.text {
                 isApplying = true
                 textView.string = document.text
+                // Der Puffer wurde komplett ersetzt, ohne Undo-Aktion zu registrieren – alte
+                // Undo-Schritte zeigen auf Bereiche, die es nicht mehr gibt.
+                textView.undoManager?.removeAllActions()
                 if documentChanged {
                     textView.setSelectedRange(NSRange(location: 0, length: 0))
-                    textView.undoManager?.removeAllActions()
                 }
                 isApplying = false
                 suggest?.hide()

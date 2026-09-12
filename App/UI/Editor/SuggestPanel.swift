@@ -90,9 +90,10 @@ final class SuggestPanel: NSPanel {
     }
 
     func hide() {
-        guard isVisible else { return }
+        // Immer abhängen: `hidesOnDeactivate` kann das Panel schon unsichtbar gemacht haben,
+        // ein noch gehängtes Child-Window käme mit dem Parent wieder nach vorn.
         parent?.removeChildWindow(self)
-        orderOut(nil)
+        if isVisible { orderOut(nil) }
     }
 
     func selectNext() {

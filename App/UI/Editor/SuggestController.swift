@@ -43,9 +43,18 @@ final class SuggestController {
 
     func selectionDidChange() {
         guard panel.isVisible, let textView else { return }
+        // `accept()` löst über `insertText` selbst eine Selektionsänderung aus – die darf
+        // das Panel nicht neu aufbauen.
+        guard !suppressNextChange else { return }
         let selection = textView.selectedRange()
         let lineRange = (textView.string as NSString).lineRange(for: NSRange(location: selection.location, length: 0))
-        if selection.length > 0 || lineRange.location != currentLineLocation { hide() }
+        if selection.length > 0 || lineRange.location != currentLineLocation {
+            hide()
+        } else {
+            // Vorschläge und `replacementRange` gelten für eine bestimmte Cursorposition:
+            // neu berechnen statt stehen lassen. `refresh()` versteckt sich selbst, wenn nichts passt.
+            refresh()
+        }
     }
 
     func hide() {

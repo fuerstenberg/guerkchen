@@ -65,15 +65,17 @@ final class AppState {
         document?.saveNow()
         selectedFileURL = url
         guard let url else { document = nil; return }
-        let doc = EditorDocument(url: url)
-        doc.onSaved = { [weak self] in self?.project?.rebuildIndex() }
-        document = doc
+        // Kein Reindex-Hook nach dem Speichern: FSEvents feuert auch für unsere eigenen
+        // Schreibvorgänge und löst `ProjectFolder.refresh()` samt Reindex aus.
+        document = EditorDocument(url: url)
     }
 
     /// Reaktion auf Ordnerereignisse: verschwundene Datei abwählen, sonst sauberes Dokument neu laden.
     func handleProjectChange() {
         guard let document else { return }
         if !FileManager.default.fileExists(atPath: document.url.path) {
+            // Sonst würde der Autosave in `select(nil)` die gelöschte Datei neu anlegen.
+            document.discardPendingChanges()
             select(nil)
         } else {
             document.reloadIfClean()

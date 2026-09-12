@@ -46,7 +46,11 @@ struct FileTreeView: View {
             switch kind {
             case .newFile(let dir):
                 NameSheet(title: "Neue Feature-Datei", prompt: "Name (ohne .feature)", initialValue: "") { name in
-                    perform { _ = try appState.project?.createFeatureFile(in: dir, name: name) }
+                    perform {
+                        if let url = try appState.project?.createFeatureFile(in: dir, name: name) {
+                            appState.select(url)
+                        }
+                    }
                 }
             case .newFolder(let dir):
                 NameSheet(title: "Neuer Ordner", prompt: "Ordnername", initialValue: "") { name in

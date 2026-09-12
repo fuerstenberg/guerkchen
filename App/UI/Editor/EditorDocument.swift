@@ -9,7 +9,6 @@ final class EditorDocument {
     private(set) var isDirty = false
     private(set) var loadError: String?
     private(set) var saveError: String?
-    @ObservationIgnored var onSaved: (() -> Void)?
     @ObservationIgnored private var autosaveTask: Task<Void, Never>?
 
     static let autosaveDelay: Duration = .seconds(1)
@@ -34,10 +33,17 @@ final class EditorDocument {
             try text.write(to: url, atomically: true, encoding: .utf8)
             isDirty = false
             saveError = nil
-            onSaved?()
         } catch {
             saveError = "Speichern fehlgeschlagen: \(error.localizedDescription)"
         }
+    }
+
+    /// Verwirft ausstehende Änderungen, damit kein Autosave mehr auf die Platte schreibt
+    /// (z. B. wenn die Datei extern gelöscht wurde).
+    func discardPendingChanges() {
+        autosaveTask?.cancel()
+        autosaveTask = nil
+        isDirty = false
     }
 
     /// Lädt die Datei neu, wenn der Editor keine ungesicherten Änderungen hat.

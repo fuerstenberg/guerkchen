@@ -11,7 +11,7 @@ struct EditorView: View {
                     ContentUnavailableView("Datei kann nicht angezeigt werden", systemImage: "doc.badge.exclamationmark",
                                            description: Text(loadError))
                 } else {
-                    GherkinTextView(document: document, palette: colors.palette) { code in
+                    GherkinTextView(document: document, text: document.text, palette: colors.palette) { code in
                         appState.project?.steps(for: code) ?? []
                     }
                 }
