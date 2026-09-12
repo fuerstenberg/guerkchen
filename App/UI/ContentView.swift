@@ -35,14 +35,8 @@ struct ContentView: View {
     }
 
     @ViewBuilder private var sidebar: some View {
-        @Bindable var appState = appState
-        if let project = appState.project {
-            // Platzhalter, wird in Task 12 durch FileTreeView ersetzt
-            List(project.tree.children ?? [], id: \.id, children: \.children, selection: $appState.selectedFileURL) { node in
-                Label(node.name, systemImage: node.isDirectory ? "folder" : "doc.text")
-                    .tag(node.url)
-                    .selectionDisabled(node.isDirectory)
-            }
+        if appState.project != nil {
+            FileTreeView()
         } else {
             ContentUnavailableView {
                 Label("Kein Projekt", systemImage: "folder.badge.questionmark")
