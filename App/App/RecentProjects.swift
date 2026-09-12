@@ -10,6 +10,7 @@ final class RecentProjects {
 
     private(set) var urls: [URL] = []
     @ObservationIgnored private let defaults: UserDefaults
+    @ObservationIgnored private var accessedPaths: Set<String> = []
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -45,7 +46,9 @@ final class RecentProjects {
     private func load() {
         urls = storedBookmarks().compactMap { data in
             guard let url = resolve(data) else { return nil }
-            _ = url.startAccessingSecurityScopedResource()
+            if accessedPaths.insert(url.path).inserted {
+                _ = url.startAccessingSecurityScopedResource()
+            }
             return url
         }
     }
