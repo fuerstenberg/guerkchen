@@ -52,14 +52,12 @@ final class SuggestController {
         panel.hide()
     }
 
-    /// Fängt Tasten ab, solange das Panel sichtbar ist. Escape wird immer geschluckt,
-    /// damit NSTextView nicht seine eigene Wortvervollständigung öffnet.
+    /// Fängt Tasten ab, solange das Panel sichtbar ist. `complete(_:)` wird immer geschluckt,
+    /// damit NSTextView nicht seine eigene Wortvervollständigung öffnet. Escape (`cancelOperation:`)
+    /// wird nur geschluckt, solange das Panel sichtbar ist, damit z. B. die Find-Bar mit Escape
+    /// weiterhin normal geschlossen werden kann.
     func handle(_ selector: Selector) -> Bool {
         if selector == #selector(NSResponder.complete(_:)) { return true }
-        if selector == #selector(NSResponder.cancelOperation(_:)) {
-            hide()
-            return true
-        }
         guard panel.isVisible else { return false }
         switch selector {
         case #selector(NSResponder.moveUp(_:)):
@@ -70,6 +68,9 @@ final class SuggestController {
             return true
         case #selector(NSResponder.insertNewline(_:)), #selector(NSResponder.insertTab(_:)):
             accept()
+            return true
+        case #selector(NSResponder.cancelOperation(_:)):
+            hide()
             return true
         default:
             return false
