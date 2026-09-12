@@ -5,7 +5,7 @@ extension NSColor {
     convenience init?(hex: String) {
         var value = hex.trimmingCharacters(in: .whitespaces)
         if value.hasPrefix("#") { value.removeFirst() }
-        guard value.count == 6, let rgb = UInt32(value, radix: 16) else { return nil }
+        guard value.count == 6, value.allSatisfy(\.isHexDigit), let rgb = UInt32(value, radix: 16) else { return nil }
         self.init(srgbRed: CGFloat((rgb >> 16) & 0xFF) / 255,
                   green: CGFloat((rgb >> 8) & 0xFF) / 255,
                   blue: CGFloat(rgb & 0xFF) / 255,
@@ -13,7 +13,7 @@ extension NSColor {
     }
 
     var hexString: String {
-        let c = usingColorSpace(.sRGB) ?? self
+        guard let c = usingColorSpace(.sRGB) ?? usingColorSpace(.deviceRGB) else { return "#000000" }
         let r = Int(round(c.redComponent * 255))
         let g = Int(round(c.greenComponent * 255))
         let b = Int(round(c.blueComponent * 255))
