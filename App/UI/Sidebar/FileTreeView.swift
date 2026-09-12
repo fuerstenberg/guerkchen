@@ -7,13 +7,13 @@ struct FileTreeView: View {
     private enum SheetKind: Identifiable {
         case newFile(in: URL)
         case newFolder(in: URL)
-        case rename(URL, isDirectory: Bool)
+        case rename(URL)
 
         var id: String {
             switch self {
             case .newFile(let dir): return "newFile:\(dir.path)"
             case .newFolder(let dir): return "newFolder:\(dir.path)"
-            case .rename(let url, _): return "rename:\(url.path)"
+            case .rename(let url): return "rename:\(url.path)"
             }
         }
     }
@@ -31,6 +31,8 @@ struct FileTreeView: View {
                     }
                 } label: {
                     Label(project.tree.name, systemImage: "folder.fill")
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(Rectangle())
                         .contextMenu { directoryMenu(for: project.rootURL, isRoot: true) }
                 }
                 .selectionDisabled()
@@ -51,12 +53,18 @@ struct FileTreeView: View {
                 NameSheet(title: "Neuer Ordner", prompt: "Ordnername", initialValue: "") { name in
                     perform { _ = try appState.project?.createFolder(in: dir, name: name) }
                 }
-            case .rename(let url, _):
+            case .rename(let url):
                 NameSheet(title: "Umbenennen", prompt: "Neuer Name", initialValue: url.lastPathComponent) { name in
                     let wasSelected = appState.selectedFileURL == url
-                    perform {
+                    // Bei der offenen Datei zuerst abwählen, damit der ausstehende Autosave
+                    // noch auf dem alten Pfad greift, bevor dieser umbenannt wird.
+                    if wasSelected { appState.select(nil) }
+                    do {
                         let renamed = try appState.project?.rename(url, to: name)
                         if wasSelected, let renamed { appState.select(renamed) }
+                    } catch {
+                        appState.errorMessage = error.localizedDescription
+                        if wasSelected { appState.select(url) }
                     }
                 }
             }
@@ -66,10 +74,14 @@ struct FileTreeView: View {
     @ViewBuilder private func row(_ node: FileNode) -> some View {
         if node.isDirectory {
             Label(node.name, systemImage: "folder")
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
                 .selectionDisabled()
                 .contextMenu { directoryMenu(for: node.url, isRoot: false) }
         } else {
             Label(node.name, systemImage: "doc.text")
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
                 .tag(node.url)
                 .contextMenu { fileMenu(for: node.url) }
         }
@@ -80,7 +92,7 @@ struct FileTreeView: View {
         Button("Neuer Ordner…") { sheet = .newFolder(in: url) }
         if !isRoot {
             Divider()
-            Button("Umbenennen…") { sheet = .rename(url, isDirectory: true) }
+            Button("Umbenennen…") { sheet = .rename(url) }
             Button("In den Papierkorb legen") { trash(url) }
         }
     }
@@ -89,7 +101,7 @@ struct FileTreeView: View {
         Button("Neue Feature-Datei…") { sheet = .newFile(in: url.deletingLastPathComponent()) }
         Button("Neuer Ordner…") { sheet = .newFolder(in: url.deletingLastPathComponent()) }
         Divider()
-        Button("Umbenennen…") { sheet = .rename(url, isDirectory: false) }
+        Button("Umbenennen…") { sheet = .rename(url) }
         Button("In den Papierkorb legen") { trash(url) }
     }
 
@@ -99,7 +111,9 @@ struct FileTreeView: View {
     }
 
     private func trash(_ url: URL) {
-        let affectsSelection = appState.selectedFileURL.map { $0.path.hasPrefix(url.path) } ?? false
+        let affectsSelection = appState.selectedFileURL.map {
+            $0.path == url.path || $0.path.hasPrefix(url.path + "/")
+        } ?? false
         if affectsSelection { appState.select(nil) }
         perform { try appState.project?.trash(url) }
     }
