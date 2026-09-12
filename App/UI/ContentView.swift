@@ -13,6 +13,8 @@ struct ContentView: View {
             detail
         }
         .navigationTitle(appState.project?.rootURL.lastPathComponent ?? "guerkchen")
+        .onChange(of: appState.selectedFileURL) { _, newValue in appState.select(newValue) }
+        .onChange(of: appState.project?.changeCounter) { _, _ in appState.handleProjectChange() }
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button {
@@ -33,10 +35,13 @@ struct ContentView: View {
     }
 
     @ViewBuilder private var sidebar: some View {
+        @Bindable var appState = appState
         if let project = appState.project {
             // Platzhalter, wird in Task 12 durch FileTreeView ersetzt
-            List(project.tree.children ?? [], id: \.id) { node in
+            List(project.tree.children ?? [], id: \.id, children: \.children, selection: $appState.selectedFileURL) { node in
                 Label(node.name, systemImage: node.isDirectory ? "folder" : "doc.text")
+                    .tag(node.url)
+                    .selectionDisabled(node.isDirectory)
             }
         } else {
             ContentUnavailableView {
@@ -50,8 +55,6 @@ struct ContentView: View {
     }
 
     @ViewBuilder private var detail: some View {
-        // Platzhalter, wird in Task 11 durch EditorView ersetzt
-        ContentUnavailableView("Keine Datei ausgewählt", systemImage: "doc.text",
-                               description: Text("Wähle links eine .feature-Datei."))
+        EditorView()
     }
 }
