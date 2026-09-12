@@ -56,6 +56,16 @@ import Testing
         #expect(renamed.lastPathComponent == "new")
     }
 
+    @Test func renamesFileChangingOnlyCase() throws {
+        let p = try TempProject(); defer { p.cleanup() }
+        let a = try p.write("a.feature", "Feature: A")
+        let renamed = try FileOperations.rename(a, to: "A")
+        #expect(renamed.lastPathComponent == "A.feature")
+        let contents = try FileManager.default.contentsOfDirectory(atPath: p.root.path)
+        #expect(contents.contains("A.feature"))
+        #expect(!contents.contains("a.feature"))
+    }
+
     @Test func trashRemovesFromFolder() throws {
         let p = try TempProject(); defer { p.cleanup() }
         let a = try p.write("a.feature", "")

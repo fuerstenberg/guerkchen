@@ -43,7 +43,10 @@ public enum FileOperations {
         let name = isDir.boolValue ? try validated(newName) : normalizedFeatureName(try validated(newName))
         let target = source.deletingLastPathComponent().appendingPathComponent(name, isDirectory: isDir.boolValue).standardizedFileURL
         if target == source { return source }
-        try ensureAbsent(target)
+        // Allow case-only renames on case-insensitive filesystems (e.g., default APFS)
+        if target.path.caseInsensitiveCompare(source.path) != .orderedSame {
+            try ensureAbsent(target)
+        }
         try FileManager.default.moveItem(at: source, to: target)
         return target
     }
