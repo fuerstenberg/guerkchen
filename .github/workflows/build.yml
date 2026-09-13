@@ -38,14 +38,20 @@ jobs:
           if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
             version="${GITHUB_REF_NAME#v}"
             asset="guerkchen-${version}.zip"
+            tag="${GITHUB_REF_NAME}"
+            title="guerkchen ${version}"
           else
             version="${marketing}"
             asset="guerkchen-latest.zip"
+            tag="latest"
+            title="Latest build (${version})"
           fi
           {
             echo "version=${version}"
             echo "build=${GITHUB_RUN_NUMBER}"
             echo "asset=${asset}"
+            echo "tag=${tag}"
+            echo "title=${title}"
           } >> "$GITHUB_OUTPUT"
 
       - name: Generate Xcode project
@@ -103,33 +109,38 @@ jobs:
           EOF
           cat release-notes.md
 
-      - name: Publish rolling "latest" release
-        if: github.event_name != 'pull_request' && github.ref_type != 'tag'
+      - name: Publish release
+        if: github.event_name != 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+          TITLE: ${{ steps.version.outputs.title }}
+          ASSET: dist/${{ steps.version.outputs.asset }}
         run: |
           set -euo pipefail
-          # drop the previous rolling release and its tag, so "latest" points at this commit
-          gh release delete latest --yes --cleanup-tag || true
-          gh api -X DELETE "repos/${GITHUB_REPOSITORY}/git/refs/tags/latest" >/dev/null 2>&1 || true
-          gh release create latest \
-            --target "${GITHUB_SHA}" \
-            --title "Latest build (${{ steps.version.outputs.version }})" \
-            --notes-file release-notes.md \
-            --prerelease \
-            "dist/${{ steps.version.outputs.asset }}"
-
-      - name: Publish tagged release
-        if: github.ref_type == 'tag'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
-            gh release upload "${GITHUB_REF_NAME}" "dist/${{ steps.version.outputs.asset }}" --clobber
-          else
-            gh release create "${GITHUB_REF_NAME}" \
-              --title "guerkchen ${{ steps.version.outputs.version }}" \
+          if [ "$TAG" = "latest" ]; then
+            # recreate the rolling release so "latest" points at this commit
+            gh release delete "$TAG" --yes --cleanup-tag || true
+            gh api -X DELETE "repos/${GITHUB_REPOSITORY}/git/refs/tags/${TAG}" >/dev/null 2>&1 || true
+            gh release create "$TAG" \
+              --target "${GITHUB_SHA}" \
+              --title "$TITLE" \
               --notes-file release-notes.md \
-              "dist/${{ steps.version.outputs.asset }}"
+              --prerelease
+          elif ! gh release view "$TAG" >/dev/null 2>&1; then
+            gh release create "$TAG" --title "$TITLE" --notes-file release-notes.md
           fi
+
+          # Upload as its own step and retry: uploads.github.com returns the odd
+          # HTTP 500, and an upload failing inside `gh release create` makes gh
+          # delete the release it just created, losing the whole release.
+          for attempt in 1 2 3; do
+            if gh release upload "$TAG" "$ASSET" --clobber; then
+              gh release view "$TAG" --json assets --jq '.assets[] | "published \(.name) (\(.size) bytes)"'
+              exit 0
+            fi
+            echo "asset upload failed (attempt ${attempt}/3), retrying in $((attempt * 10))s"
+            sleep $((attempt * 10))
+          done
+          echo "::error::could not upload ${ASSET} to release ${TAG}"
+          exit 1
