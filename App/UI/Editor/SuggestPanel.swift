@@ -3,10 +3,14 @@ import SwiftUI
 import GuerkchenCore
 
 struct SuggestListView: View {
-    static let rowHeight: CGFloat = 24
+    /// Die Zeilen wachsen mit der eingestellten Editorschrift mit.
+    static func rowHeight(for font: NSFont) -> CGFloat {
+        max(24, ceil(font.ascender - font.descender + font.leading) + 8)
+    }
 
     let suggestions: [Suggestion]
     let selectedIndex: Int
+    let font: NSFont
     let onPick: (Int) -> Void
 
     var body: some View {
@@ -17,12 +21,12 @@ struct SuggestListView: View {
                         .foregroundStyle(.secondary)
                         .frame(width: 14)
                     Text(suggestion.label)
-                        .font(.system(size: 13, design: .monospaced))
+                        .font(Font(font))
                         .lineLimit(1)
                     Spacer(minLength: 0)
                 }
                 .padding(.horizontal, 8)
-                .frame(height: Self.rowHeight)
+                .frame(height: Self.rowHeight(for: font))
                 .background(index == selectedIndex ? Color.accentColor.opacity(0.25) : Color.clear,
                             in: RoundedRectangle(cornerRadius: 4))
                 .contentShape(Rectangle())
@@ -49,6 +53,7 @@ final class SuggestPanel: NSPanel {
     var onPick: ((Int) -> Void)?
     private(set) var suggestions: [Suggestion] = []
     private(set) var selectedIndex = 0
+    private var font: NSFont = .monospacedSystemFont(ofSize: 13, weight: .regular)
     private let hosting: NSHostingView<SuggestListView>
 
     var selectedSuggestion: Suggestion? {
@@ -56,7 +61,9 @@ final class SuggestPanel: NSPanel {
     }
 
     init() {
-        hosting = NSHostingView(rootView: SuggestListView(suggestions: [], selectedIndex: 0, onPick: { _ in }))
+        hosting = NSHostingView(rootView: SuggestListView(suggestions: [], selectedIndex: 0,
+                                                          font: .monospacedSystemFont(ofSize: 13, weight: .regular),
+                                                          onPick: { _ in }))
         super.init(contentRect: NSRect(x: 0, y: 0, width: Self.width, height: 100),
                    styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
         isFloatingPanel = true
@@ -72,12 +79,13 @@ final class SuggestPanel: NSPanel {
     override var canBecomeKey: Bool { false }
     override var canBecomeMain: Bool { false }
 
-    func show(_ suggestions: [Suggestion], below cursorRect: NSRect, in window: NSWindow) {
+    func show(_ suggestions: [Suggestion], font: NSFont, below cursorRect: NSRect, in window: NSWindow) {
         self.suggestions = suggestions
+        self.font = font
         selectedIndex = 0
         render()
 
-        let height = CGFloat(suggestions.count) * SuggestListView.rowHeight + 8
+        let height = CGFloat(suggestions.count) * SuggestListView.rowHeight(for: font) + 8
         var origin = NSPoint(x: cursorRect.minX, y: cursorRect.minY - height - 2)
         if let screen = window.screen {
             let visible = screen.visibleFrame
@@ -109,7 +117,7 @@ final class SuggestPanel: NSPanel {
     }
 
     private func render() {
-        hosting.rootView = SuggestListView(suggestions: suggestions, selectedIndex: selectedIndex) { [weak self] index in
+        hosting.rootView = SuggestListView(suggestions: suggestions, selectedIndex: selectedIndex, font: font) { [weak self] index in
             self?.selectedIndex = index
             self?.onPick?(index)
         }

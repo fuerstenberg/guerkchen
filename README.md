@@ -62,6 +62,9 @@ them: into a prompt, into a repository, or into a real Cucumber setup.
 - **Syntax highlighting** for eight categories: Feature/Rule, Background,
   Scenario/Outline/Examples, steps, comments, tags, tables and doc strings — every color
   configurable in Settings, with a reset to the defaults.
+- **Appearance in Settings.** Font family (monospaced families by default, every installed font on
+  request), font size and the editor background color — with a live preview and a reset. The
+  background follows the system appearance until you pick a color of your own.
 - **Autosave.** About a second after the last edit, when switching files, and on quit.
 - **Recent projects.** The last project reopens on launch; the last ten are listed in the menu.
 - **Sandboxed**, with no network access and no third-party dependencies.

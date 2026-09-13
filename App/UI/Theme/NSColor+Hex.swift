@@ -19,4 +19,11 @@ extension NSColor {
         let b = Int(round(c.blueComponent * 255))
         return String(format: "#%02X%02X%02X", r, g, b)
     }
+
+    /// Helligkeit nach Rec. 601 – entscheidet, ob heller oder dunkler Text darauf lesbar ist.
+    var isDark: Bool {
+        guard let c = usingColorSpace(.sRGB) ?? usingColorSpace(.deviceRGB) else { return false }
+        let brightness = 0.299 * c.redComponent + 0.587 * c.greenComponent + 0.114 * c.blueComponent
+        return brightness < 0.55
+    }
 }

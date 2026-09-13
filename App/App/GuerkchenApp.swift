@@ -3,13 +3,13 @@ import SwiftUI
 @main
 struct GuerkchenApp: App {
     @State private var appState = AppState()
-    @State private var colors = ColorSettings()
+    @State private var appearance = AppearanceSettings()
 
     var body: some Scene {
         Window("guerkchen", id: "main") {
             ContentView()
                 .environment(appState)
-                .environment(colors)
+                .environment(appearance)
                 .frame(minWidth: 800, minHeight: 500)
         }
         .commands {
@@ -37,7 +37,7 @@ struct GuerkchenApp: App {
 
         Settings {
             SettingsView()
-                .environment(colors)
+                .environment(appearance)
         }
     }
 }

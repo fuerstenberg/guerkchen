@@ -5,6 +5,8 @@ import GuerkchenCore
 @MainActor
 final class SuggestController {
     var stepsProvider: (String) -> [String] = { _ in [] }
+    /// Die Vorschläge landen so im Editor, wie sie hier stehen – deshalb dieselbe Schrift.
+    var font: NSFont = .monospacedSystemFont(ofSize: 13, weight: .regular)
 
     private weak var textView: NSTextView?
     private let panel = SuggestPanel()
@@ -118,7 +120,7 @@ final class SuggestController {
         currentLineLocation = lineRange.location
 
         let cursorRect = textView.firstRect(forCharacterRange: NSRange(location: selection.location, length: 0), actualRange: nil)
-        panel.show(suggestions, below: cursorRect, in: window)
+        panel.show(suggestions, font: font, below: cursorRect, in: window)
     }
 
     /// Ungerade Anzahl Doc-String-Begrenzer vor dieser Zeile → wir sind in einem Doc-String.
