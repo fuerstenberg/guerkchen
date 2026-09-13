@@ -118,29 +118,37 @@ jobs:
           ASSET: dist/${{ steps.version.outputs.asset }}
         run: |
           set -euo pipefail
+
+          create_args=(--title "$TITLE" --notes-file release-notes.md)
           if [ "$TAG" = "latest" ]; then
+            create_args+=(--target "${GITHUB_SHA}" --prerelease)
             # recreate the rolling release so "latest" points at this commit
             gh release delete "$TAG" --yes --cleanup-tag || true
             gh api -X DELETE "repos/${GITHUB_REPOSITORY}/git/refs/tags/${TAG}" >/dev/null 2>&1 || true
-            gh release create "$TAG" \
-              --target "${GITHUB_SHA}" \
-              --title "$TITLE" \
-              --notes-file release-notes.md \
-              --prerelease
-          elif ! gh release view "$TAG" >/dev/null 2>&1; then
-            gh release create "$TAG" --title "$TITLE" --notes-file release-notes.md
           fi
 
-          # Upload as its own step and retry: uploads.github.com returns the odd
-          # HTTP 500, and an upload failing inside `gh release create` makes gh
-          # delete the release it just created, losing the whole release.
-          for attempt in 1 2 3; do
-            if gh release upload "$TAG" "$ASSET" --clobber; then
-              gh release view "$TAG" --json assets --jq '.assets[] | "published \(.name) (\(.size) bytes)"'
-              exit 0
+          # The release API hands out sporadic HTTP 500s, on creation as well as
+          # on asset upload, so retry the whole sequence. Creation is guarded by
+          # `release view`, because a 500 can still have created the release —
+          # and an upload failing inside `gh release create` makes gh delete the
+          # release it just made.
+          published=false
+          for attempt in 1 2 3 4; do
+            if ! gh release view "$TAG" >/dev/null 2>&1; then
+              gh release create "$TAG" "${create_args[@]}" || true
             fi
-            echo "asset upload failed (attempt ${attempt}/3), retrying in $((attempt * 10))s"
-            sleep $((attempt * 10))
+            if gh release view "$TAG" >/dev/null 2>&1 && gh release upload "$TAG" "$ASSET" --clobber; then
+              published=true
+              break
+            fi
+            echo "publishing ${TAG} failed (attempt ${attempt}/4)"
+            if [ "$attempt" -lt 4 ]; then
+              sleep $((attempt * 10))
+            fi
           done
-          echo "::error::could not upload ${ASSET} to release ${TAG}"
-          exit 1
+
+          if [ "$published" != true ]; then
+            echo "::error::could not publish ${ASSET} to release ${TAG}"
+            exit 1
+          fi
+          gh release view "$TAG" --json assets --jq '.assets[] | "published \(.name) (\(.size) bytes)"'
