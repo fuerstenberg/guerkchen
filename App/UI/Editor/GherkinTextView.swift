@@ -7,10 +7,8 @@ struct GherkinTextView: NSViewRepresentable {
     /// Nur damit der View-Wert sich ändert, wenn sich der Text des Dokuments ändert
     /// (z. B. nach einer externen Änderung). Der Coordinator arbeitet weiter mit `document`.
     let text: String
-    let palette: HighlightPalette
+    let theme: EditorTheme
     let stepsProvider: (String) -> [String]
-
-    static let font = NSFont.monospacedSystemFont(ofSize: 13, weight: .regular)
 
     func makeCoordinator() -> Coordinator { Coordinator() }
 
@@ -21,7 +19,6 @@ struct GherkinTextView: NSViewRepresentable {
         textView.isRichText = false
         textView.allowsUndo = true
         textView.usesFindBar = true
-        textView.font = Self.font
         textView.textContainerInset = NSSize(width: 8, height: 8)
         textView.isAutomaticQuoteSubstitutionEnabled = false
         textView.isAutomaticDashSubstitutionEnabled = false
@@ -33,12 +30,12 @@ struct GherkinTextView: NSViewRepresentable {
         textView.smartInsertDeleteEnabled = false
         context.coordinator.textView = textView
         context.coordinator.suggest = SuggestController(textView: textView)
-        context.coordinator.update(document: document, palette: palette, stepsProvider: stepsProvider)
+        context.coordinator.update(document: document, theme: theme, stepsProvider: stepsProvider)
         return scrollView
     }
 
     func updateNSView(_ nsView: NSScrollView, context: Context) {
-        context.coordinator.update(document: document, palette: palette, stepsProvider: stepsProvider)
+        context.coordinator.update(document: document, theme: theme, stepsProvider: stepsProvider)
     }
 
     /// Deterministischer Abbau: ohne das bliebe ein offenes Vorschlagspanel am Hauptfenster hängen.
@@ -52,16 +49,18 @@ struct GherkinTextView: NSViewRepresentable {
         weak var textView: NSTextView?
         var suggest: SuggestController?
         private var document: EditorDocument?
-        private var palette: HighlightPalette = [:]
+        private var theme: EditorTheme?
         private var isApplying = false
 
-        func update(document: EditorDocument, palette: HighlightPalette, stepsProvider: @escaping (String) -> [String]) {
+        func update(document: EditorDocument, theme: EditorTheme, stepsProvider: @escaping (String) -> [String]) {
             suggest?.stepsProvider = stepsProvider
             guard let textView else { return }
             let documentChanged = document !== self.document
-            let paletteChanged = palette != self.palette
+            let themeChanged = theme != self.theme
             self.document = document
-            self.palette = palette
+            self.theme = theme
+
+            if themeChanged { applyTheme(theme) }
 
             if documentChanged || textView.string != document.text {
                 isApplying = true
@@ -75,15 +74,37 @@ struct GherkinTextView: NSViewRepresentable {
                 isApplying = false
                 suggest?.hide()
                 rehighlight()
-            } else if paletteChanged {
+            } else if themeChanged {
                 rehighlight()
             }
         }
 
         func rehighlight() {
-            guard let textView, let storage = textView.textStorage else { return }
-            SyntaxHighlighter.highlight(storage: storage, palette: palette, font: GherkinTextView.font)
-            textView.typingAttributes = [.font: GherkinTextView.font, .foregroundColor: NSColor.textColor]
+            guard let textView, let theme, let storage = textView.textStorage else { return }
+            SyntaxHighlighter.highlight(storage: storage, theme: theme)
+            textView.typingAttributes = [.font: theme.font, .foregroundColor: theme.textColor]
+        }
+
+        // MARK: - Private
+
+        private func applyTheme(_ theme: EditorTheme) {
+            guard let textView else { return }
+            let background = theme.backgroundColor
+            textView.font = theme.font
+            textView.drawsBackground = true
+            textView.backgroundColor = background
+            textView.insertionPointColor = theme.textColor
+            suggest?.font = theme.font
+
+            guard let scrollView = textView.enclosingScrollView else { return }
+            scrollView.drawsBackground = true
+            scrollView.backgroundColor = background
+            // Bei eigenem Hintergrund passen Scroller und Auswahlfarbe sonst nicht dazu.
+            if theme.customBackgroundColor != nil {
+                scrollView.appearance = NSAppearance(named: background.isDark ? .darkAqua : .aqua)
+            } else {
+                scrollView.appearance = nil
+            }
         }
 
         // MARK: NSTextViewDelegate
