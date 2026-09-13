@@ -13,6 +13,10 @@ struct GuerkchenApp: App {
                 .frame(minWidth: 800, minHeight: 500)
         }
         .commands {
+            // Ersetzt den Standardeintrag, der nur eine fehlende Hilfe-Datei melden würde.
+            CommandGroup(replacing: .help) {
+                KeywordHelpMenuButton()
+            }
             CommandGroup(replacing: .newItem) {
                 Button("Neue Feature-Datei…") { appState.requestNewFile() }
                     .keyboardShortcut("n", modifiers: .command)
@@ -34,6 +38,12 @@ struct GuerkchenApp: App {
                     .disabled(appState.project == nil)
             }
         }
+
+        Window("Schlüsselwörter erklärt", id: KeywordHelpView.windowID) {
+            KeywordHelpView()
+                .environment(appState)
+        }
+        .defaultSize(width: 520, height: 640)
 
         Settings {
             SettingsView()

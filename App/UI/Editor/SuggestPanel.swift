@@ -23,7 +23,16 @@ struct SuggestListView: View {
                     Text(suggestion.label)
                         .font(Font(font))
                         .lineLimit(1)
-                    Spacer(minLength: 0)
+                        .layoutPriority(1)
+                    Spacer(minLength: 8)
+                    // Drei Worte, was das Schlüsselwort bedeutet – ausführlich steht es
+                    // im Fenster „Schlüsselwörter erklärt“.
+                    if let hint = hint(for: suggestion) {
+                        Text(hint)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    }
                 }
                 .padding(.horizontal, 8)
                 .frame(height: Self.rowHeight(for: font))
@@ -36,6 +45,11 @@ struct SuggestListView: View {
         .padding(4)
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
         .overlay(RoundedRectangle(cornerRadius: 8).stroke(.separator))
+    }
+
+    private func hint(for suggestion: Suggestion) -> String? {
+        guard case let .keyword(category) = suggestion.kind else { return nil }
+        return KeywordHelp.hint(for: category)
     }
 
     private func icon(for kind: SuggestionKind) -> String {

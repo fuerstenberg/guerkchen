@@ -3,6 +3,7 @@ import GuerkchenCore
 
 struct ContentView: View {
     @Environment(AppState.self) private var appState
+    @Environment(\.openWindow) private var openWindow
 
     var body: some View {
         @Bindable var appState = appState
@@ -22,6 +23,14 @@ struct ContentView: View {
                 } label: {
                     Label("Ordner öffnen", systemImage: "folder")
                 }
+            }
+            ToolbarItem(placement: .primaryAction) {
+                Button {
+                    openWindow(id: KeywordHelpView.windowID)
+                } label: {
+                    Label("Schlüsselwörter erklärt", systemImage: "questionmark.circle")
+                }
+                .help("Was bedeuten Feature, Szenario, Angenommen …?")
             }
         }
         .alert("Fehler", isPresented: Binding(

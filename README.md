@@ -59,6 +59,10 @@ them: into a prompt, into a repository, or into a real Cucumber setup.
   Arrow keys select, Enter/Tab accepts, Escape dismisses.
 - **Every Gherkin dialect.** Detected from the official `# language: de` line, falling back to `en`.
   Step suggestions only come from files in the same language.
+- **Keywords explained.** A help window (Help ▸ „Schlüsselwörter erklärt“, ⌘?) explains every
+  keyword in one plain sentence with a short example — written for people who do not develop
+  software. The examples use the keywords of the open file's dialect. The suggestion list shows the
+  same explanation in three words next to each keyword.
 - **Syntax highlighting** for eight categories: Feature/Rule, Background,
   Scenario/Outline/Examples, steps, comments, tags, tables and doc strings — every color
   configurable in Settings, with a reset to the defaults.

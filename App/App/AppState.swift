@@ -59,6 +59,12 @@ final class AppState {
         newFileRequestID += 1
     }
 
+    /// Sprache der geöffneten Datei – für die Beispiele in der Schlüsselwort-Hilfe.
+    var dialect: GherkinDialect {
+        guard let text = document?.text else { return GherkinLanguages.english }
+        return LineScanner.dialect(for: text)
+    }
+
     /// Wechselt die geöffnete Datei. Speichert die vorherige.
     func select(_ url: URL?) {
         guard url != document?.url else { return }
