@@ -28,6 +28,10 @@ targets:
         LSApplicationCategoryType: public.app-category.developer-tools
         NSHumanReadableCopyright: "© 2026 René Fürstenberg"
         CFBundleIconName: AppIcon
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+    scheme:
+      testTargets: []
     entitlements:
       path: Config/guerkchen.entitlements
       properties:
