@@ -23,8 +23,17 @@ struct EditorView: View {
                 }
             }
         } else {
-            ContentUnavailableView("Keine Datei ausgewählt", systemImage: "doc.text",
-                                   description: Text("Wähle links eine .feature-Datei."))
+            ContentUnavailableView {
+                VStack(spacing: 12) {
+                    Image("GuerkchenIcon")
+                        .resizable()
+                        .frame(width: 96, height: 96)
+                        .accessibilityHidden(true)
+                    Text("Keine Datei ausgewählt")
+                }
+            } description: {
+                Text("Wähle links eine .feature-Datei.")
+            }
         }
     }
 }

@@ -11,6 +11,15 @@ des Targets. Verdrahtet über `project.yml`:
 - `settings.base.ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon`
 - `info.properties.CFBundleIconName: AppIcon`
 
+Fürs UI liegt daneben `GuerkchenIcon.imageset` (128 px @1x, 256 px @2x) — gedacht für
+Darstellung bis 128 pt. Verwendet im leeren Editor-Zustand (`App/UI/Editor/EditorView.swift`):
+
+    Image("GuerkchenIcon")
+        .resizable()
+        .frame(width: 96, height: 96)
+
+Größere Darstellung braucht größere Slots — dann `png/guerkchen-512.png` als @2x nachlegen.
+
 Nach Änderungen am Icon `xcodegen generate` laufen lassen — der Asset-Katalog wird über
 `sources: App` automatisch mitgenommen.
 
@@ -29,13 +38,6 @@ Nach Änderungen am Icon `xcodegen generate` laufen lassen — der Asset-Katalog
 Fenster-Icon zur Laufzeit setzen (AppKit):
 
     NSApplication.shared.applicationIconImage = NSImage(named: "AppIcon")
-
-SwiftUI-Nutzung im UI (z. B. Willkommensfenster) — SVG lässt sich nicht laden,
-daher das PNG als Image-Set in `Assets.xcassets` ablegen:
-
-    Image("guerkchen-512")
-        .resizable()
-        .frame(width: 96, height: 96)
 
 Web / README:
 
