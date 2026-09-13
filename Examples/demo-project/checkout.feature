@@ -5,11 +5,12 @@ Feature: Checkout
 
   Scenario: Pay with credit card
     Given a user is logged in
-    And the cart is not empty
-    When the user chooses credit card
-    And the user confirms the order
-    Then the order is placed
-    And the user receives a confirmation e-mail with the text
-      """
-      Thank you for your order.
-      """
+      And the cart is not empty
+     When the user chooses credit card
+      And the user confirms the order
+     Then the order is placed
+      And the user receives a confirmation e-mail with the text
+        """
+        Thank you for your order.
+        """
+
