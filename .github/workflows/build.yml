@@ -1,0 +1,135 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build, test and release
+    runs-on: macos-26
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Show toolchain
+        run: |
+          xcodebuild -version
+          swift --version
+
+      - name: Install build tools
+        run: brew install xcodegen xcbeautify
+
+      - name: Determine version
+        id: version
+        run: |
+          set -euo pipefail
+          marketing=$(sed -nE 's/^[[:space:]]*MARKETING_VERSION:[[:space:]]*"?([^"[:space:]]+)"?.*/\1/p' project.yml | head -1)
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            version="${GITHUB_REF_NAME#v}"
+            asset="guerkchen-${version}.zip"
+          else
+            version="${marketing}"
+            asset="guerkchen-latest.zip"
+          fi
+          {
+            echo "version=${version}"
+            echo "build=${GITHUB_RUN_NUMBER}"
+            echo "asset=${asset}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Test GuerkchenCore
+        run: swift test --package-path Core
+
+      - name: Build app (Release)
+        run: |
+          set -euo pipefail
+          xcodebuild build \
+            -project guerkchen.xcodeproj \
+            -scheme guerkchen \
+            -configuration Release \
+            -destination 'generic/platform=macOS' \
+            -derivedDataPath build \
+            MARKETING_VERSION='${{ steps.version.outputs.version }}' \
+            CURRENT_PROJECT_VERSION='${{ steps.version.outputs.build }}' \
+            | xcbeautify
+
+      - name: Package app
+        run: |
+          set -euo pipefail
+          app="build/Build/Products/Release/guerkchen.app"
+          test -d "$app"
+          codesign --verify --verbose "$app"
+          mkdir -p dist
+          ditto -c -k --keepParent --sequesterRsrc "$app" "dist/${{ steps.version.outputs.asset }}"
+          shasum -a 256 "dist/${{ steps.version.outputs.asset }}"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: guerkchen-app
+          path: dist/*.zip
+          if-no-files-found: error
+
+      - name: Write release notes
+        if: github.event_name != 'pull_request'
+        run: |
+          set -euo pipefail
+          cat > release-notes.md <<EOF
+          **Version:** ${{ steps.version.outputs.version }} (build ${{ steps.version.outputs.build }})
+          **Commit:** \`${GITHUB_SHA}\`
+
+          Universal build (Apple Silicon + Intel), requires macOS 15 or newer.
+
+          ### Installation
+
+          1. Download and unzip \`${{ steps.version.outputs.asset }}\`, then move \`guerkchen.app\` to \`/Applications\`.
+          2. The app is ad-hoc signed and not notarized, so macOS blocks it on first launch. Clear the quarantine flag once:
+
+              xattr -dr com.apple.quarantine /Applications/guerkchen.app
+          EOF
+          cat release-notes.md
+
+      - name: Publish rolling "latest" release
+        if: github.event_name != 'pull_request' && github.ref_type != 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          # drop the previous rolling release and its tag, so "latest" points at this commit
+          gh release delete latest --yes --cleanup-tag || true
+          gh api -X DELETE "repos/${GITHUB_REPOSITORY}/git/refs/tags/latest" >/dev/null 2>&1 || true
+          gh release create latest \
+            --target "${GITHUB_SHA}" \
+            --title "Latest build (${{ steps.version.outputs.version }})" \
+            --notes-file release-notes.md \
+            --prerelease \
+            "dist/${{ steps.version.outputs.asset }}"
+
+      - name: Publish tagged release
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
+            gh release upload "${GITHUB_REF_NAME}" "dist/${{ steps.version.outputs.asset }}" --clobber
+          else
+            gh release create "${GITHUB_REF_NAME}" \
+              --title "guerkchen ${{ steps.version.outputs.version }}" \
+              --notes-file release-notes.md \
+              "dist/${{ steps.version.outputs.asset }}"
+          fi
