@@ -1,16 +1,16 @@
-# Drittanbieter-Lizenzen
+# Third-party notices
 
-guerkchen selbst steht unter der [MIT-Lizenz](LICENSE) und hat keine Laufzeit-Abhängigkeiten.
-Mitgeliefert wird eine Datei aus einem fremden Projekt:
+guerkchen itself is [MIT licensed](LICENSE) and has no runtime dependencies. One file from another
+project ships with it:
 
 ## cucumber/gherkin — `gherkin-languages.json`
 
-- Pfad in diesem Repository: `Core/Sources/GuerkchenCore/Resources/gherkin-languages.json`
-- Herkunft: <https://github.com/cucumber/gherkin>
-- Lizenz: MIT
+- Path in this repository: `Core/Sources/GuerkchenCore/Resources/gherkin-languages.json`
+- Upstream: <https://github.com/cucumber/gherkin>
+- License: MIT
 
-Die Datei enthält die offiziellen Gherkin-Schlüsselwörter aller unterstützten Sprachen und wird
-unverändert in die App gebündelt.
+The file holds the official Gherkin keywords for every supported language and is bundled into the
+app unmodified.
 
 ```
 MIT License

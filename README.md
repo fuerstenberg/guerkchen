@@ -4,7 +4,7 @@
 
 # guerkchen
 
-**Ein kleiner Gherkin-Editor für macOS, der dafür sorgt, dass du Anforderungen immer im gleichen Format und mit dem gleichen Vokabular beschreibst.**
+**A small Gherkin editor for macOS that keeps you writing requirements in the same format — and with the same vocabulary — every time.**
 
 [![Build](https://github.com/fuerstenberg/guerkchen/actions/workflows/build.yml/badge.svg)](https://github.com/fuerstenberg/guerkchen/actions/workflows/build.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -12,119 +12,116 @@
 
 </div>
 
-## Wofür ist guerkchen gedacht?
+## What is guerkchen for?
 
-guerkchen ist als Werkzeug entstanden, um **Anforderungen an eine KI** aufzuschreiben — und zwar
-jedes Mal in derselben festen Struktur:
+guerkchen started as a tool for writing down **requirements for an AI** — always in the same fixed
+structure:
 
 ```gherkin
-# language: de
-Funktionalität: Anmeldung
-  Als registrierter Nutzer
-  möchte ich mich anmelden können,
-  damit ich mein persönliches Dashboard sehe
+Feature: Login
+  As a registered user
+  I want to log in with my e-mail address
+  So that I can see my personal dashboard
 
-  Szenario: Erfolgreiche Anmeldung
-    Gegeben sei der Nutzer ist auf der Anmeldeseite
-    Wenn der Nutzer gültige Zugangsdaten eingibt
-    Dann sieht der Nutzer das Dashboard
+  Scenario: Successful login
+    Given a user is on the login page
+    When the user enters valid credentials
+    Then the user sees the dashboard
 ```
 
-Gherkin (`.feature`) ist dafür ein guter Rahmen: Rolle, Ziel und Nutzen stehen oben, die
-Erwartungen darunter als Given/When/Then. Kein Prosa-Wust, keine Interpretationslücken — und
-weil das Format schon lange existiert, verstehen es Sprachmodelle ebenso gut wie Menschen.
+Gherkin (`.feature`) is a good frame for that: role, goal and benefit up top, the expectations
+below as Given/When/Then. No wall of prose, no room for interpretation — and because the format
+has been around for years, language models read it just as well as people do.
 
-Das eigentliche Problem beim Aufschreiben ist nicht die Struktur, sondern die **Sprachdisziplin**:
-In Datei A steht „der Nutzer ist angemeldet“, in Datei B „ein eingeloggter User“ — gemeint ist
-dasselbe. Genau da setzt guerkchen an. Beim Tippen schlägt der Editor zwei Dinge vor:
+The hard part of writing these files isn't the structure, it's **staying consistent in wording**.
+File A says "a user is logged in", file B says "the user has signed in" — both mean the same thing.
+That is exactly where guerkchen helps. As you type, the editor suggests two things:
 
-1. die **Schlüsselwörter** des gewählten Gherkin-Dialekts (`g` → `Given`, `sc` → `Scenario`,
-   `Scenario O` → `Scenario Outline`), und
-2. alle **Step-Texte, die im Projekt schon existieren** (`Given ` + `a u` → `a user is logged in`).
+1. the **keywords** of the selected Gherkin dialect (`g` → `Given`, `sc` → `Scenario`,
+   `Scenario O` → `Scenario Outline`), and
+2. every **step text that already exists in the project** (`Given ` + `a u` → `a user is on the login page`).
 
-So entsteht über alle Dateien hinweg ein einheitliches Vokabular, ohne dass man ein Glossar
-pflegen muss. Ein Ordner ist ein Projekt, die `.feature`-Dateien darin sind der Wortschatz.
+The result is one shared vocabulary across all your files, without maintaining a glossary. A folder
+is a project, and the `.feature` files inside it are the vocabulary.
 
-guerkchen ist bewusst **kein** Test-Runner, kein Cucumber-Ersatz und kein Step-Definition-Generator.
-Es ist ein Editor — mehr nicht. Die Feature-Dateien landen anschließend dort, wo du sie brauchst:
-im Prompt, im Repository oder in einem echten Cucumber-Setup.
+guerkchen is deliberately **not** a test runner, not a Cucumber replacement and not a step
+definition generator. It is an editor, nothing more. The feature files then go wherever you need
+them: into a prompt, into a repository, or into a real Cucumber setup.
 
-> **Note** — Die App-Oberfläche ist auf Deutsch. Bearbeitet werden können Feature-Dateien in allen
-> Gherkin-Dialekten (rund 80 Sprachen, via `# language:`-Zeile).
+> **Note** — The app's user interface is in German. The files it edits can use any Gherkin dialect
+> (around 80 languages, selected with the `# language:` line).
 
 ## Features
 
-- **Projekt = Ordner.** Dateibaum mit Ordnern und `.feature`-Dateien; anlegen, umbenennen und in
-  den Papierkorb legen per Kontextmenü. Änderungen von außen werden automatisch übernommen.
-- **Suggest beim Tippen.** Ab dem ersten Zeichen, Fuzzy-Matching, max. 10 Einträge.
-  Pfeiltasten wählen, Enter/Tab übernimmt, Escape schließt.
-- **Alle Gherkin-Dialekte.** Erkennung über die offizielle `# language: de`-Zeile, Fallback `en`.
-  Step-Vorschläge kommen nur aus Dateien derselben Sprache.
-- **Syntax-Highlighting** für acht Kategorien: Feature/Rule, Background, Scenario/Outline/Examples,
-  Steps, Kommentare, Tags, Tabellen, Doc-Strings — jede Farbe in den Einstellungen anpassbar,
-  mit Reset auf die Standardwerte.
-- **Autosave.** Rund eine Sekunde nach der letzten Änderung, beim Dateiwechsel und beim Beenden.
-- **Zuletzt geöffnet.** Das letzte Projekt öffnet beim Start wieder, die zehn letzten stehen im Menü.
-- **Sandboxed**, ohne Netzwerkzugriff und ohne Fremdabhängigkeiten.
+- **A project is a folder.** File tree of folders and `.feature` files; create, rename and move to
+  trash from the context menu. Changes made outside the app are picked up automatically.
+- **Suggestions while typing.** From the first character, fuzzy matched, at most 10 entries.
+  Arrow keys select, Enter/Tab accepts, Escape dismisses.
+- **Every Gherkin dialect.** Detected from the official `# language: de` line, falling back to `en`.
+  Step suggestions only come from files in the same language.
+- **Syntax highlighting** for eight categories: Feature/Rule, Background,
+  Scenario/Outline/Examples, steps, comments, tags, tables and doc strings — every color
+  configurable in Settings, with a reset to the defaults.
+- **Autosave.** About a second after the last edit, when switching files, and on quit.
+- **Recent projects.** The last project reopens on launch; the last ten are listed in the menu.
+- **Sandboxed**, with no network access and no third-party dependencies.
 
 ## Installation
 
-Fertige Builds liegen unter [Releases](https://github.com/fuerstenberg/guerkchen/releases) —
-`latest` ist der jeweils aktuelle Stand von `main`. Universal Build (Apple Silicon + Intel),
-benötigt **macOS 15 oder neuer**.
+Prebuilt apps are on the [releases page](https://github.com/fuerstenberg/guerkchen/releases) —
+`latest` always tracks the current state of `main`. Universal build (Apple Silicon + Intel),
+requires **macOS 15 or newer**.
 
-1. ZIP herunterladen, entpacken, `guerkchen.app` nach `/Applications` ziehen.
-2. Die App ist nur ad-hoc signiert und nicht notarisiert, deshalb blockiert macOS den ersten Start.
-   Einmalig das Quarantäne-Flag entfernen:
+1. Download the ZIP, unpack it and move `guerkchen.app` to `/Applications`.
+2. The app is only ad-hoc signed and not notarized, so macOS blocks the first launch. Clear the
+   quarantine flag once:
 
    ```sh
    xattr -dr com.apple.quarantine /Applications/guerkchen.app
    ```
 
-Zum Ausprobieren: App starten, „Ordner öffnen…“ und den mitgelieferten Ordner
-[`Examples/demo-project`](Examples/demo-project) wählen.
+To try it out: launch the app, choose "Ordner öffnen…" (Open folder) and pick the bundled
+[`Examples/demo-project`](Examples/demo-project) folder.
 
-## Selbst bauen
+## Building from source
 
-Vorausgesetzt werden Xcode 26 und [XcodeGen](https://github.com/yonaskolb/XcodeGen)
+Requires Xcode 26 and [XcodeGen](https://github.com/yonaskolb/XcodeGen)
 (`brew install xcodegen`).
 
 ```sh
 git clone https://github.com/fuerstenberg/guerkchen.git
 cd guerkchen
-swift test --package-path Core          # Tests der UI-freien Schichten
-xcodegen generate                       # erzeugt guerkchen.xcodeproj
+swift test --package-path Core          # tests for the UI-free layers
+xcodegen generate                       # creates guerkchen.xcodeproj
 xcodebuild -scheme guerkchen -configuration Debug build
 ```
 
-`guerkchen.xcodeproj` ist nicht eingecheckt und wird immer aus [`project.yml`](project.yml) erzeugt.
+`guerkchen.xcodeproj` is not checked in; it is always generated from [`project.yml`](project.yml).
 
-## Aufbau
+## Layout
 
-Die UI-freien Schichten liegen in einem lokalen Swift-Package, damit ihre Tests ohne Xcode-Testhost
-laufen:
+The UI-free layers live in a local Swift package so their tests run without an Xcode test host:
 
-| Pfad | Inhalt |
+| Path | Contents |
 | --- | --- |
-| `Core/Sources/GuerkchenCore/Gherkin/` | Dialekte aus `gherkin-languages.json`, zeilenweiser Scanner |
-| `Core/Sources/GuerkchenCore/Project/` | Ordner als Projekt, Dateibaum, FSEvents-Watcher, Step-Index |
-| `Core/Sources/GuerkchenCore/Suggest/` | Vorschlagslogik und Fuzzy-Matcher |
-| `App/` | SwiftUI-Shell mit `NSTextView` via `NSViewRepresentable` |
-| `Design/AppIcon/` | Icon-Quellen und gerenderte Größen ([Details](Design/AppIcon/README.md)) |
-| `docs/superpowers/` | Design-Spezifikation und Umsetzungsplan |
+| `Core/Sources/GuerkchenCore/Gherkin/` | Dialects from `gherkin-languages.json`, line-by-line scanner |
+| `Core/Sources/GuerkchenCore/Project/` | Folder as a project, file tree, FSEvents watcher, step index |
+| `Core/Sources/GuerkchenCore/Suggest/` | Suggestion logic and fuzzy matcher |
+| `App/` | SwiftUI shell wrapping `NSTextView` via `NSViewRepresentable` |
+| `Design/AppIcon/` | Icon sources and rendered sizes ([details](Design/AppIcon/README.md)) |
+| `docs/superpowers/` | Design specification and implementation plan (in German) |
 
 ## Status
 
-Ein Hobbyprojekt, das genau das tut, was ich davon brauche. Es gibt keine Roadmap, keine
-Support-Zusage und keine garantierten Antwortzeiten. Issues und Pull Requests sind willkommen,
-können aber unbeantwortet bleiben — wer mehr oder anderes will, darf die MIT-Lizenz gerne
-ausnutzen und forken.
+A hobby project that does exactly what I need from it. There is no roadmap, no support promise and
+no guaranteed response times. Issues and pull requests are welcome but may go unanswered — if you
+want more, or something different, please make use of the MIT license and fork it.
 
-## Lizenz
+## License
 
-[MIT](LICENSE) — © 2026 René Fürstenberg. Benutzen, ändern, weitergeben und verkaufen ist erlaubt,
-solange der Copyright-Hinweis erhalten bleibt. Ohne Gewährleistung und ohne Haftung.
+[MIT](LICENSE) — © 2026 René Fürstenberg. Use, modify, redistribute and sell it as you like, as
+long as the copyright notice stays intact. No warranty, no liability.
 
-Enthaltene Drittanbieter-Bestandteile sind in
-[THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) aufgeführt: die Datei `gherkin-languages.json`
-stammt aus dem [Cucumber-Projekt](https://github.com/cucumber/gherkin) und steht ebenfalls unter MIT.
+Bundled third-party components are listed in
+[THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md): `gherkin-languages.json` comes from the
+[Cucumber project](https://github.com/cucumber/gherkin) and is MIT licensed as well.
